@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Google 회원가입</title>
+    <link rel="stylesheet" type="text/css" href="/css/join_find.css">
+</head>
+<body>
+    <div class="container">
+        <form th:object="${memberDTO}">
+            <input name="platform" type="hidden" value="Google">
+            <input name="roleName" type="hidden" value="USER">
+            <input id="hNickname" type="hidden">
+            <a class="mainLogo" href="/" alt="SOJU">
+                <img src="/img/betalogo.jpg" class="mainLogoImg">
+            </a>
+            <h2>Google 회원가입</h2>
+            <ul>
+                <li class="liJoinInput"><label class="labelText">아이디(이메일) </label><br><input th:field="*{emailId}" class="inputText" type="text" readonly></li>
+
+                <li class="liJoinInput"><label class="labelText">닉네임(별명) </label><br><input th:field="*{nickname}" placeholder="10자 이내 닉네임" class="inputText" type="text">
+                    <input type="button" value="중복확인" class="btnJoinForm" onclick="checkNickname(this.form)"><br></li>
+                <li class="liJoinInput"><label id="nicknameCheck" class="errorMsg"></label></li>
+
+                <li class="liJoinInput"><label class="labelText">성별 </label><br><label class="genderLabel">남</label><input th:field="*{gender}" type="radio" value="M" readonly>
+                    <label class="genderLabel">여</label><input th:field="*{gender}" type="radio" value="F"></li>
+
+                <li class="liJoinInput"><label class="labelText">이름 </label><br><input th:field="*{name}" type="text" class="inputText" readonly></li>
+
+                <li class="liJoinInput"><label class="labelText">생일 </label><br><input th:field="*{birthday}" type="date" class="inputText" readonly></li>
+
+                <li class="liJoinInput"><label class="labelText">휴대전화 </label><br><input th:field="*{phoneNumber}" type="tel" class="inputText" readonly>
+                    <input id="btnPhone" value="인증하기" type="button" class="btnJoinForm" onclick="phoneCheck()"></li>
+
+                <li class="liJoinInput"><label class="labelText">주소 </label><br><input th:field="*{address}" class="inputText" type="text">
+                    <input id="btnAddress" type="button" value="주소찾기" class="btnJoinForm"></li>
+                <li class="liJoinInput"><label class="labelText">상세주소 </label><br><input th:field="*{detailAddress}" class="inputText" type="text"></li>
+
+                <li class="liJoinInput"><label class="labelText">관심분야 </label><br><select th:field="*{studyType}" class="inputText studyType"><option value="">관심분야</option>
+                                                                          <option value="computer">컴퓨터 / IT</option>
+                                                                          <option value="math">수학</option>
+                                                                          <option value="management">경영 / 마케팅</option>
+                                                                          <option value="design">디자인</option>
+                                                                          <option value="education">교육</option>
+                                                                          <option value="literature">문학</option>
+                                                                          <option value="engineering">공학</option>
+                                                                          <option value="language">언어</option>
+                                                                          <option value="employment">취업</option>
+                                                                          <option value="entrance">입시</option>
+                                                                          <option value="etc">기타</option></select></li>
+            </ul>
+            <div class="divBtnJoin">
+                <input type="button" value="가입하기" class="btnJoin" onclick="join(this.form)">
+                <input type="button" value="취소하기" class="btnJoin" onclick="location.href='/loginform'">
+            </div>
+        </form>
+    </div>
+    <!--JS----------------------------------------------------------------------------------------------------------------->
+    <script src="/js/httpRequest.js"></script>
+    <!--닉네임 중복체크 및 글자 수 제한-->
+    <script>
+        function checkNickname(f) {
+            let nickname = f.nickname.value; //입력한 닉네임 가져오기
+            let nicknameCheck = document.getElementById("nicknameCheck");
+
+            if ( nickname.length > 20 ) {
+                nicknameCheck.innerHTML = "닉네임은 10자내로 작성해주세요 (영문만 작성시 20자까지 가능합니다.)";
+            } else {
+                nicknameCheck.innerHTML = "";
+                let url = "/joinform/nicknamecheck";
+                let param = "nickname=" + nickname;
+                sendRequest(url, param, resultCheckNickname, "POST");
+            }
+        }
+
+        function resultCheckNickname() {
+             if ( xhr.readyState == 4 && xhr.status == 200 ) {
+                 let data = xhr.responseText; //닉네임
+                 let hNickname = document.getElementById("hNickname");
+
+                 if ( data == "no" ) {
+                    alert("이미 존재하는 닉네임입니다.");
+                    hNickname.value = "false";
+                 } else {
+                    alert("사용 가능한 닉네임입니다.");
+                    hNickname.value = data;
+                 }
+                 return;
+             }
+        }
+    </script>
+
+    <!-- iamport.payment.js 인증 -->
+    <script type="text/javascript" src="https://cdn.iamport.kr/js/iamport.payment-1.2.0.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <!-- 아임포트 본인인증 및 값 삽입 => '인증하기' 버튼 클릭시 -->
+    <script>
+        //textbox & 버튼(2개이상)을 누르면 함수가 실행되도록 하는 방법
+        //querySelectorAll로 id값(#id)을 불러와서 배열로 생성, 이후 forEach문을 활용해 각각의 것을 눌렀을 때 실행되게 하도록 한다.
+        let openPort = document.querySelectorAll("#name, #birthday, #phoneNumber, #btnPhone");
+        openPort.forEach(function(element){
+            element.addEventListener("click", function() {
+
+                var IMP = window.IMP; //init로 객체초기화(가맹점식별코드)
+                IMP.init("imp88140833"); //가맹점 번호
+                IMP.certification({
+                    popup : true
+                } ,function (rsp) {
+                    if ( rsp.success ){ //인증 성공 시
+                        let impUid = rsp.imp_uid;
+                        let url = "/joinform/certifications";
+                        let param = "impUid=" + impUid;
+                        sendRequest(url, param, resultCertifications, "POST");
+                        return;
+                    } else { //인증 실패 시
+                        alert("인증 실패하였습니다.");
+                        return;
+                    }
+                });
+            });
+        });
+
+        function resultCertifications () {
+            if ( xhr.readyState == 4 && xhr.status == 200 ) {
+                let data = xhr.responseText;
+                let json = JSON.parse(data); // map으로 받아온 값을 json형태로 가져오는 방법
+
+                let name = document.getElementById("name");
+                let birthday = document.getElementById("birthday");
+                let phoneNumber = document.getElementById("phoneNumber");
+
+                name.value = json.name;
+                name.readOnly = true;
+                birthday.value = json.birthday;
+                birthday.readOnly = true;
+                phoneNumber.value = json.phoneNumber;
+                phoneNumber.readOnly = true;
+
+                let url = "/joinform/phonecheck";
+                let param = "phoneNumber=" + json.phoneNumber;
+                sendRequest(url, param, phoneCheck, "POST");
+            }
+        }
+
+        function phoneCheck() {
+            if ( xhr.readyState == 4 && xhr.status == 200 ) {
+                let data = xhr.responseText;
+                let name = document.getElementById("name");
+                let birthday = document.getElementById("birthday");
+                let phoneNumber = document.getElementById("phoneNumber");
+
+                console.log(data);
+                if( data == "no" ) {
+                    alert("이미 가입된 회원 정보입니다.");
+                    name.value = "";
+                    birthday.value = "";
+                    phoneNumber.value = "";
+                    return;
+                } else {
+                    alert("가입 가능한 회원 정보입니다.");
+                    return;
+                }
+            }
+        }
+    </script>
+
+    <!--주소입력 API-->
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script>
+        window.onload = function() {
+            document.getElementById("address").addEventListener("click", function() {
+                new daum.Postcode({
+                    oncomplete: function(data) {
+                        document.getElementById("address").value = data.address;
+                        document.getElementById("detailAddress").focus();
+                    }
+                }).open();
+            });
+            document.getElementById("btnAddress").addEventListener("click", function() {
+                new daum.Postcode({
+                    oncomplete: function(data) {
+                        document.getElementById("address").value = data.address;
+                        document.getElementById("detailAddress").focus();
+                    }
+                }).open();
+            });
+        }
+    </script>
+
+    <!--회원가입 진행 & 유효성 검사-->
+    <script>
+        function join(f) {
+            //입력한 정보들
+            //emailId
+            let emailId = f.emailId.value; //Email
+
+            //name
+            let name = f.name.value;
+
+            //nickname
+            let nickname = f.nickname.value;
+            let hNickname = document.getElementById("hNickname").value; //닉네임 중복체크
+
+            //birthday
+            let birthday = f.birthday.value; //birthday
+
+            //gender
+            let gender = f.gender.value; //gender
+
+            //phoneNumber
+            let phoneNumber = f.phoneNumber.value; //phoneNumber
+
+            //address
+            let address = f.address.value;
+            let detailAddress = f.detailAddress.value;
+
+            //studyType
+            let studyType = f.studyType.value;
+
+            //플랫폼
+            let platform = f.platform.value;
+
+            let roleName = f.roleName.value;
+
+            //유효성 검사
+            //ID
+            if ( emailId == '' ) {
+                alert("아이디를 불러오지 못했습니다. 구글 로그인 부터 다시 진행해 주세요");
+                location.href = "/loginform";
+                return;
+            }
+
+            //이름
+            if ( name == '' ) {
+                alert("이름을 입력하세요");
+                return;
+            }
+
+            //닉네임
+            if ( nickname == '' ) {
+                alert("닉네임을 입력하세요");
+                return;
+            }
+            //닉네임 형식
+            if ( nickname.length > 20 ) {
+                alert("닉네임의 길이는 10자 이내입니다.");
+                return;
+            }
+            //닉네임 중복확인 여부
+            if ( nickname != hNickname ) {
+                alert("닉네임 중복확인을 해주세요");
+                return;
+            }
+
+            //birthday
+            if ( birthday == '' ) {
+                alert("생일을 입력하세요");
+                return;
+            }
+
+            //gender
+            if ( gender == '' ) {
+                alert("성별을 선택하세요");
+                return;
+            }
+
+            //phoneNumber
+            if ( phoneNumber == '' ) {
+                alert("핸드폰 번호를 입력하세요");
+                return;
+            }
+
+            //address
+            if ( address == '' ) {
+                alert("주소를 입력하세요");
+                return;
+            }
+            //detailAddress
+            if ( detailAddress == '' ) {
+                alert("상세주소를 입력하세요");
+                return;
+            }
+
+            //studyType
+            if ( studyType == '' ) {
+                alert("관심분야를 선택하세요");
+                return;
+            }
+
+            let url = "/loginform/socialjoin";
+            let param = "emailId=" + emailId +
+                        "&name=" + name +
+                        "&nickname=" + nickname +
+                        "&birthday=" + birthday +
+                        "&gender=" + gender +
+                        "&phoneNumber=" + phoneNumber +
+                        "&address=" + address +
+                        "&detailAddress=" + detailAddress +
+                        "&studyType=" + studyType +
+                        "&platform=" + platform +
+                        "&roleName=" + roleName;
+            sendRequest(url, param, resultJoin, "POST");
+        }
+
+        function resultJoin() {
+            if ( xhr.readyState == 4 && xhr.status == 200 ) {
+                let data = xhr.responseText;
+
+                if (data == "no") {
+                    alert("이미 가입된 회원정보가 있습니다.\n 입력한 정보확인 혹은 아이디/비밀번호 찾기를 이용해 주세요");
+                    location.href = "/loginform";
+                } else {
+                    alert("가입이 완료되었습니다.\n 로그인 페이지로 이동합니다.");
+                    location.href = "/loginform";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
