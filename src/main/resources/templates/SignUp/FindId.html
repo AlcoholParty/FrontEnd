@@ -5,15 +5,23 @@
     <meta charset="UTF-8">
     <title>아이디 찾기</title>
     <link rel="stylesheet" type="text/css" href="/css/join_find.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square-neo.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
+    <div class="container smallContainer">
+        <div class="mainLogo">
+            <a href="/" alt="SOJU">
+                <img src="/img/logo_mate.png" class="mainLogoImg">
+            </a>
+        </div>
         <h2>아이디 찾기</h2>
         <form action="/loginform/findidform" method="post" th:object="${memberDTO}">
-            <ul class="ulJoinForm">
-                <li class="liJoinInput"><label class="labelText">이름</label><br><input th:field="*{name}" class="inputText" type="text" placeholder="이름"></li>
-                <li class="liJoinInput"><label class="labelText">핸드폰번호</label><br><input th:field="*{phoneNumber}" class="inputText" type="text" placeholder="핸드폰번호(하이픈'-'없이)"></li>
-            </ul>
+            <div class="joinFormContainer">
+                <ul class="findIdForm">
+                    <li class="liJoinInput"><label class="labelText">이름</label><br><input th:field="*{name}" class="inputText" type="text" placeholder="이름"></li>
+                    <li class="liJoinInput"><label class="labelText">핸드폰번호</label><br><input th:field="*{phoneNumber}" class="inputText" type="text" placeholder="핸드폰번호(하이픈'-'없이)"></li>
+                </ul>
+            </div>
             <div class="divBtnJoin">
                 <input type="button" value="아이디 찾기" class="btnJoin" onclick="findId(this.form)">
                 <input type="button" value="취소하기" class="btnJoin" onclick="location.href='/loginform'">

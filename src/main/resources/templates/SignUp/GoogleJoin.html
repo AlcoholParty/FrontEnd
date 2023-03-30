@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Google 회원가입</title>
     <link rel="stylesheet" type="text/css" href="/css/join_find.css">
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square-neo.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -11,44 +12,48 @@
             <input name="platform" type="hidden" value="Google">
             <input name="roleName" type="hidden" value="USER">
             <input id="hNickname" type="hidden">
-            <a class="mainLogo" href="/" alt="SOJU">
-                <img src="/img/betalogo.jpg" class="mainLogoImg">
-            </a>
+            <div class="mainLogo">
+                <a href="/" alt="SOJU">
+                    <img src="/img/logo_mate.png" class="mainLogoImg">
+                </a>
+            </div>
             <h2>Google 회원가입</h2>
-            <ul>
-                <li class="liJoinInput"><label class="labelText">아이디(이메일) </label><br><input th:field="*{emailId}" class="inputText" type="text" readonly></li>
+            <div class="joinFormContainer">
+                <ul>
+                    <li class="liJoinInput"><label class="labelText">아이디(이메일) </label><br><input th:field="*{emailId}" class="inputText" type="text" readonly></li>
 
-                <li class="liJoinInput"><label class="labelText">닉네임(별명) </label><br><input th:field="*{nickname}" placeholder="10자 이내 닉네임" class="inputText" type="text">
-                    <input type="button" value="중복확인" class="btnJoinForm" onclick="checkNickname(this.form)"><br></li>
-                <li class="liJoinInput"><label id="nicknameCheck" class="errorMsg"></label></li>
+                    <li class="liJoinInput"><label class="labelText">닉네임(별명) </label><br><input th:field="*{nickname}" placeholder="10자 이내 닉네임" class="inputText" type="text">
+                        <input type="button" value="중복확인" class="btnJoinForm" onclick="checkNickname(this.form)"><br></li>
+                    <li class="liJoinInput"><label id="nicknameCheck" class="errorMsg"></label></li>
 
-                <li class="liJoinInput"><label class="labelText">성별 </label><br><label class="genderLabel">남</label><input th:field="*{gender}" type="radio" value="M" readonly>
-                    <label class="genderLabel">여</label><input th:field="*{gender}" type="radio" value="F"></li>
+                    <li class="liJoinInput"><label class="labelText">성별 </label><br><label class="genderLabel">남</label><input th:field="*{gender}" type="radio" value="M" readonly>
+                        <label class="genderLabel">여</label><input th:field="*{gender}" type="radio" value="F"></li>
 
-                <li class="liJoinInput"><label class="labelText">이름 </label><br><input th:field="*{name}" type="text" class="inputText" readonly></li>
+                    <li class="liJoinInput"><label class="labelText">이름 </label><br><input th:field="*{name}" type="text" class="inputText" readonly></li>
 
-                <li class="liJoinInput"><label class="labelText">생일 </label><br><input th:field="*{birthday}" type="date" class="inputText" readonly></li>
+                    <li class="liJoinInput"><label class="labelText">생일 </label><br><input th:field="*{birthday}" type="date" class="inputText" readonly></li>
 
-                <li class="liJoinInput"><label class="labelText">휴대전화 </label><br><input th:field="*{phoneNumber}" type="tel" class="inputText" readonly>
-                    <input id="btnPhone" value="인증하기" type="button" class="btnJoinForm" onclick="phoneCheck()"></li>
+                    <li class="liJoinInput"><label class="labelText">휴대전화 </label><br><input th:field="*{phoneNumber}" type="tel" class="inputText" readonly>
+                        <input id="btnPhone" value="인증하기" type="button" class="btnJoinForm" onclick="phoneCheck()"></li>
 
-                <li class="liJoinInput"><label class="labelText">주소 </label><br><input th:field="*{address}" class="inputText" type="text">
-                    <input id="btnAddress" type="button" value="주소찾기" class="btnJoinForm"></li>
-                <li class="liJoinInput"><label class="labelText">상세주소 </label><br><input th:field="*{detailAddress}" class="inputText" type="text"></li>
+                    <li class="liJoinInput"><label class="labelText">주소 </label><br><input th:field="*{address}" class="inputText" type="text">
+                        <input id="btnAddress" type="button" value="주소찾기" class="btnJoinForm"></li>
+                    <li class="liJoinInput"><label class="labelText">상세주소 </label><br><input th:field="*{detailAddress}" class="inputText" type="text"></li>
 
-                <li class="liJoinInput"><label class="labelText">관심분야 </label><br><select th:field="*{studyType}" class="inputText studyType"><option value="">관심분야</option>
-                                                                          <option value="computer">컴퓨터 / IT</option>
-                                                                          <option value="math">수학</option>
-                                                                          <option value="management">경영 / 마케팅</option>
-                                                                          <option value="design">디자인</option>
-                                                                          <option value="education">교육</option>
-                                                                          <option value="literature">문학</option>
-                                                                          <option value="engineering">공학</option>
-                                                                          <option value="language">언어</option>
-                                                                          <option value="employment">취업</option>
-                                                                          <option value="entrance">입시</option>
-                                                                          <option value="etc">기타</option></select></li>
-            </ul>
+                    <li class="liJoinInput"><label class="labelText">관심분야 </label><br><select th:field="*{studyType}" class="inputText studyType"><option value="">관심분야</option>
+                                                                              <option value="computer">컴퓨터 / IT</option>
+                                                                              <option value="math">수학</option>
+                                                                              <option value="management">경영 / 마케팅</option>
+                                                                              <option value="design">디자인</option>
+                                                                              <option value="education">교육</option>
+                                                                              <option value="literature">문학</option>
+                                                                              <option value="engineering">공학</option>
+                                                                              <option value="language">언어</option>
+                                                                              <option value="employment">취업</option>
+                                                                              <option value="entrance">입시</option>
+                                                                              <option value="etc">기타</option></select></li>
+                </ul>
+            </div>
             <div class="divBtnJoin">
                 <input type="button" value="가입하기" class="btnJoin" onclick="join(this.form)">
                 <input type="button" value="취소하기" class="btnJoin" onclick="location.href='/loginform'">
