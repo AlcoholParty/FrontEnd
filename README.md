@@ -135,6 +135,8 @@
 #### 📍 Footer
 <img width="896" alt="footer" src="https://user-images.githubusercontent.com/114130942/228769079-5e16bc71-9a68-4fe9-99fa-f5771df4f6db.png">
 
+#
+
 ## 📌 로그인 페이지
 <img width="1277" alt="login" src="https://user-images.githubusercontent.com/114130942/228770682-efc0af76-9fc5-4e0f-bd62-5e0fc25fc2f1.png">
 
@@ -146,6 +148,8 @@
 
 #### 📍 아이디 찾기 결과
 <img width="395" alt="findid" src="https://user-images.githubusercontent.com/114130942/220035658-e262c80d-248a-4434-97f8-0484a658e287.png">
+
+#
 
 ## 📌 마이페이지 (기본 이동은 '내 프로필')
 <img width="911" alt="profile" src="https://user-images.githubusercontent.com/114130942/228771752-066be7cf-e4f8-4dc4-b5fb-5e97b89c7c7e.png">
