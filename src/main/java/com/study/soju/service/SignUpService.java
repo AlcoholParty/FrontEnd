@@ -6,88 +6,86 @@ import com.study.soju.repository.MemberRepository;
 import lombok.Builder;
 import org.apache.commons.mail.HtmlEmail;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.Principal;
-import java.util.HashMap;
 import java.util.Properties;
 
 @Builder
 @Service
 public class SignUpService implements UserDetailsService {
+    // 멤버 DB
     @Autowired
     MemberRepository memberRepository;
-
-    ////////////////////////////////////////////////회원가입////////////////////////////////////////////////
-    //회원가입
-    public void joinMember(Member.rqJoinMember rqJoinMember, PasswordEncoder passwordEncoder) {
-        //DTO > Entity + 암호화 메서드
-        Member joinMember = rqJoinMember.toEntity(passwordEncoder);
-        //변환된 Entity DB에 저장 & 받아옴
-        memberRepository.save(joinMember);
-    }
-
-    //아이디 중복체크
-    public String checkEmailId(String emailId) {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // 아이디 중복체크 및 메일로 인증 번호 발송
+    public Member.rpCheckEmailId checkEmailId(String emailId, PasswordEncoder passwordEncoder, String naverId, String naverPwd) { // 4. 파라미터로 컨트롤러에서 넘어온 아이디와 비밀번호 암호화 메소드를 받아온다.
+        // 5. 4에서 파라미터로 받아온 이메일 아이디로 유저를 조회하고, 조회된 값을 받아온다.
         Member member = memberRepository.findByEmailId(emailId);
+        // 6. 5에서 조회된 값이 있는지 체크한다.
+        // 6-1. 조회된 값이 있는 경우 - 중복 가입자
         if( member != null ) {
-            return "no";
+            // 6-1-1. 에러 체크 값과 에러 메세지를 DTO로 변환한다.
+            Member.rpCheckEmailId rpCheckEmailId = new Member.rpCheckEmailId("0", "이미 존재하는 아이디입니다.");
+            // 6-1-2. 6-1-1에서 변환된 DTO로 변환한다.
+            return rpCheckEmailId;
+        // 6-2. 조회된 값이 없는 경우 - 신규 가입자
         } else {
-            //MailKeyDTO불러와서 사용
+            // 7. MailKeyDTO를 사용하여 인증 번호를 생성한다.
             String mailKey = new MailKeyDTO().getKey(7, false);
 
-            //Mail Server 설정
+            // 8. 메일 발송에 필요한 값들을 미리 설정한다.
+            // 8-1. Mail Server
             String charSet = "UTF-8"; // 사용할 언어셋
             String hostSMTP = "smtp.naver.com"; // 사용할 SMTP
-            String hostSMTPid = ""; // 사용할 SMTP에 해당하는 ID - 이메일 형식
-            String hostSMTPpwd = ""; // 사용할 ID에 해당하는 PWD
-
-            // 가장 중요한 TLS설정 - 이것이 없으면 신뢰성 에러가 나온다
+            String hostSMTPid = naverId; // 사용할 SMTP에 해당하는 이메일
+            String hostSMTPpwd = naverPwd; // 사용할 hostSMTPid에 해당하는 PWD
+            // 8-2. 메일 발신자 및 수신자
+            String fromEmail = naverId; // 메일 발신자 이메일 - hostSMTPid와 동일하게 작성한다.
+            String fromName = "관리자"; // 메일 발신자 이름
+            String mail = emailId; // 메일 수신자 이메일 - 3에서 파라미터로 받아온 아이디를 작성한다.
+            // 8-3. 가장 중요한 TLS - 이것이 없으면 신뢰성 에러가 나온다
             Properties props = System.getProperties();
             props.put("mail.smtp.starttls.enable", "true");
             props.put("mail.smtp.ssl.protocols", "TLSv1.2");
 
-            // 보내는 사람 E-Mail, 제목, 내용
-            String fromEmail = ""; // 보내는 사람 email - - hostSMTPid와 동일하게 작성
-            String fromName = "관리자"; // 보내는 사람 이름
-            String subject = "[Mate] 이메일 인증번호 발송 안내입니다."; // 제목
-
-            // 받는 사람 E-Mail 주소
-            String mail = emailId; // 받는 사람 email
-
             try {
+                // 9. 메일 발송을 맡아줄 HtmlEmail을 생성한다.
                 HtmlEmail email = new HtmlEmail(); // Email 생성
-                email.setDebug(true);
+                // 10. 9에서 생성한 HtmlEmail에 8에서 미리 설정해놓은 값들과 추가로 필요한 값들을 모두 전달한다.
+                email.setDebug(true); // 디버그 사용
                 email.setCharset(charSet); // 언어셋 사용
-                email.setSSL(true);
                 email.setHostName(hostSMTP); // SMTP 사용
                 email.setSmtpPort(587);	// SMTP 포트 번호 입력
-
-                email.setAuthentication(hostSMTPid, hostSMTPpwd); // 메일 ID, PWD
-                email.setTLS(true);
-                email.addTo(mail); // 받는 사람
-                email.setFrom(fromEmail, fromName, charSet); // 보내는 사람
-                email.setSubject(subject); // 제목
-                email.setHtmlMsg(
-                        "<p>" + "[메일 인증 안내입니다.]" + "</p>" +
-                                "<p>" + "Mate를 사용해 주셔서 감사드립니다." + "</p>" +
-                                "<p>" + "아래 인증 코드를 '인증번호'란에 입력해 주세요." + "</p>" +
-                                "<p>" + mailKey + "</p>"); // 본문 내용
-                email.send(); // 메일 보내기
-                // 메일 보내기가 성공하면 메일로 보낸 랜덤키를 콜백 메소드에도 전달
-                return mailKey;
+                email.setAuthentication(hostSMTPid, hostSMTPpwd); // SMTP 이메일 및 비밀번호
+                email.addTo(mail); // 메일 수신자 이메일
+                email.setFrom(fromEmail, fromName, charSet); // 메일 발신자 정보
+                email.setSubject("[Mate] 이메일 인증번호 발송 안내입니다."); // 메일 제목
+                email.setHtmlMsg("<p>" + "[메일 인증 안내입니다.]" + "</p>" +
+                                 "<p>" + "Mate를 사용해 주셔서 감사드립니다." + "</p>" +
+                                 "<p>" + "아래 인증 코드를 '인증번호'란에 입력해 주세요." + "</p>" +
+                                 "<p>" + mailKey + "</p>"); // 메일 내용 - 7에서 생성한 인증 번호를 여기서 전달한다.
+                // 11. 10에서 전달한 값들을 토대로 9에서 생성한 HtmlEmail을 사용하여 메일을 발송한다.
+                email.send();
+                // 12. 메일이 정상적으로 발송됬는지 체크한다.
+                // 12-1. 메일 발송이 성공한 경우
+                // 12-1-1. 4에서 파라미터로 받아온 이메일 아이디와 7에서 생성한 인증 번호를 비밀번호 암호화 메소드를 사용하여 DTO로 변환한다.
+                Member.rpCheckEmailId rpCheckEmailId = new Member.rpCheckEmailId(emailId, mailKey, passwordEncoder);
+                // 12-1-2. 12-1-1에서 변환된 DTO를 반환한다.
+                return rpCheckEmailId;
+            // 12-2. 메일 발송이 실패한 경우
             } catch (Exception e) {
-                System.out.println(e);
-                // 메일 보내기가 실패하면 "no"를 콜백 메소드에 전달
-                return "no";
+                //System.out.println(e);
+                // 12-2-1. 에러 체크 값과 에러 메세지를 DTO로 변환한다.
+                Member.rpCheckEmailId rpCheckEmailId = new Member.rpCheckEmailId("-1", "메일 발송에 실패하였습니다.\n다시 시도해주시기 바랍니다.");
+                // 12-2-2. 12-2-1에서 변환된 DTO를 반환한다.
+                return rpCheckEmailId;
             }
         }
     }
@@ -102,34 +100,39 @@ public class SignUpService implements UserDetailsService {
         }
     }
 
-    //핸드폰번호 중복체크
-    public String checkPhone (String phoneNumber) {
+    // 휴대폰 번호로 중복 가입자 체크
+    public String checkPhone (String phoneNumber) { // 38. 파라미터로 컨트롤러에서 넘어온 휴대폰 번호를 받아온다.
+        // 39. 38에서 파라미터로 받아온 휴대폰 번호로 유저를 조회하고, 조회된 값을 받아온다.
         Member member = memberRepository.findByPhoneNumber(phoneNumber);
+        // 40. 39에서 조회된 값이 있는지 체크한다.
+        // 40-1. 조회된 값이 있는 경우 - 중복 가입자
         if ( member != null ) {
+            // 40-1-1. no를 반환한다.
             return "no";
+        // 40-2. 조회된 값이 없는 경우 - 신규 가입자
         } else {
+            // 40-2-1. yes를 반환한다.
             return "yes";
         }
     }
 
-    ////////////////////////////////////////////////로그인////////////////////////////////////////////////
-    //로그인
-    @Override
-    public UserDetails loadUserByUsername(String emailId) throws UsernameNotFoundException {
-        //아이디를 넘겨받아 조회된 값을 받아옴
-        Member member = memberRepository.findByEmailId(emailId);
-        //조회된 값 없는 경우
-        if(member == null){
-            throw new UsernameNotFoundException(emailId);
+    // 자사 회원가입
+    public String joinMember(Member.rqJoinMember rqJoinMember, PasswordEncoder passwordEncoder) { // 3. 파라미터로 컨트롤러에서 넘어온 DTO와 비밀번호 암호화 메소드를 받아온다.
+        // 4. 3에서 파라미터로 받아온 DTO를 Entity로 변환하면서 3에서 파라미터로 같이 받아온 비밀번호 암호화 메소드를 파라미터로 넘겨준다.
+        Member joinMember = rqJoinMember.toEntity(passwordEncoder);
+        // 5. 4에서 변환된 Entity로 유저를 저장하고, 저장된 값을 받아온다.
+        Member member = memberRepository.save(joinMember);
+        // 6. 5에서 저장된 값이 있는지 체크한다.
+        // 6-1. 저장된 값이 없는 경우 - 가입 실패
+        if ( member == null ) {
+            // 6-1-1. no를 반환한다.
+            return "no";
+        // 6-2. 저장된 값이 있는 경우 - 가입 성공
+        } else {
+            // 6-2-1. yes를 반환한다.
+            return "yes";
         }
-        //조회됐을 경우
-        return User.builder()
-                .username(member.getEmailId())
-                .password(member.getPwd())
-                .roles(member.getRoleName())
-                .build();
     }
-
     ////////////////////////////////////////////////ID찾기////////////////////////////////////////////////
     //ID찾기
     public Member.rpFindId findIdSearch(Member.rqFindId rqFindId){
@@ -142,123 +145,71 @@ public class SignUpService implements UserDetailsService {
             return rpFindId;
         }
     }
-
     ////////////////////////////////////////////////PWD찾기(재설정)////////////////////////////////////////////////
-    //비밀번호 재설정 전, 본인인증 메일 전송
-    public String pwdEmailCheck(String emailId){
-        Member member = memberRepository.findByEmailId(emailId);
-        if( member == null ) {
-            return "no";
-        } else {
-            //MailKeyDTO불러와서 사용
-            String mailKey = new MailKeyDTO().getKey(7, false);
-
-            //Mail Server 설정
-            String charSet = "UTF-8"; // 사용할 언어셋
-            String hostSMTP = "smtp.naver.com"; // 사용할 SMTP
-            String hostSMTPid = ""; // 사용할 SMTP에 해당하는 ID - 이메일 형식
-            String hostSMTPpwd = ""; // 사용할 ID에 해당하는 PWD
-
-            // 가장 중요한 TLS설정 - 이것이 없으면 신뢰성 에러가 나온다
-            Properties props = System.getProperties();
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.ssl.protocols", "TLSv1.2");
-
-            // 보내는 사람 E-Mail, 제목, 내용
-            String fromEmail = ""; // 보내는 사람 email - - hostSMTPid와 동일하게 작성
-            String fromName = "관리자"; // 보내는 사람 이름
-            String subject = "[Mate] 이메일 인증번호 발송 안내입니다."; // 제목
-
-            // 받는 사람 E-Mail 주소
-            String mail = emailId; // 받는 사람 email
-
-            try {
-                HtmlEmail email = new HtmlEmail(); // Email 생성
-                email.setDebug(true);
-                email.setCharset(charSet); // 언어셋 사용
-                email.setSSL(true);
-                email.setHostName(hostSMTP); // SMTP 사용
-                email.setSmtpPort(587);	// SMTP 포트 번호 입력
-
-                email.setAuthentication(hostSMTPid, hostSMTPpwd); // 메일 ID, PWD
-                email.setTLS(true);
-                email.addTo(mail); // 받는 사람
-                email.setFrom(fromEmail, fromName, charSet); // 보내는 사람
-                email.setSubject(subject); // 제목
-                email.setHtmlMsg(
-                        "<p>" + "[메일 인증 안내입니다.]" + "</p>" +
-                                "<p>" + "Mate를 사용해 주셔서 감사드립니다." + "</p>" +
-                                "<p>" + "아래 인증 코드를 '인증번호'란에 입력해 주세요." + "</p>" +
-                                "<p>" + mailKey + "</p>"); // 본문 내용
-                email.send(); // 메일 보내기
-                // 메일 보내기가 성공하면 메일로 보낸 랜덤키를 콜백 메소드에도 전달
-                return mailKey;
-            } catch (Exception e) {
-                System.out.println(e);
-                // 메일 보내기가 실패하면 "no"를 콜백 메소드에 전달
-                return "no";
-            }
-        }
-    }
-
-    //PWD 재설정을 위한 정보확인
+    // PWD 재설정을 위한 정보확인
     public String findPwdSearch(Member.rqFindPwd rqFindPwd){
         Member member = rqFindPwd.toEntity();
         Member findByFindPwd = memberRepository.findPwd(member.getEmailId(), member.getName(), member.getPhoneNumber());
-        if ( findByFindPwd.getPlatform() == null ) {
+        if ( findByFindPwd == null ) {
             return "no";
         } else {
             return findByFindPwd.getPlatform();
         }
     }
 
-    //PWD 재설정
+    // PWD 재설정
     public void resetPwd(Member.rqResetPwd rqResetPwd, PasswordEncoder passwordEncoder){
         Member member = rqResetPwd.toEntity(passwordEncoder);
         memberRepository.findChangePwd(member.getEmailId(), member.getPwd());
     }
-
-    ////////////////////////////////////////////////회원정보 수정////////////////////////////////////////////////
-    //회원정보 조회
-    public Member.rpModifyMember selectMember(Principal principal){
-        String emailId = principal.getName();
-        Member member = memberRepository.findAll(emailId);
-        Member.rpModifyMember rpModifyMember = new Member.rpModifyMember(member);
-        return rpModifyMember;
+    ///////////////////////////////////////////////// 로그인 유저 정보 조회 /////////////////////////////////////////////////
+    // 로그인 유저 닉네임 조회
+    public Member.rpNickname memberNickname(String emailId) { // 1. 파라미터로 컨트롤러에서 넘어온 아이디를 받아온다.
+        // 2. 1에서 파라미터로 받아온 아이디로 로그인 유저를 조회하고, 조회된 값을 받아온다.
+        Member member = memberRepository.findByEmailId(emailId);
+        // 3. 2에서 조회된 Entity를 DTO로 변환한다.
+        Member.rpNickname rpNickname = new Member.rpNickname(member);
+        // 4. 3에서 변환된 DTO를 반환한다.
+        return rpNickname;
     }
 
-    //회원 프로필 조회
-    public Member.rpProfile selectProfile(Principal principal){
-        String emailId = principal.getName();
-        Member member = memberRepository.findAll(emailId);
-        Member.rpProfile rpProfile = new Member.rpProfile(member);
-        return rpProfile;
+    // 로그인 유저 닉네임 및 프로플 사진 조회
+    public Member.rpNickImage memberNickImage(String emailId) { // 1. 파라미터로 컨트롤러에서 넘어온 아이디를 받아온다.
+        // 2. 1에서 파라미터로 받아온 아이디로 로그인 유저를 조회하고, 조회된 값을 받아온다.
+        Member member = memberRepository.findByEmailId(emailId);
+        // 3. 2에서 조회된 Entity를 DTO로 변환한다.
+        Member.rpNickImage rpNickImage = new Member.rpNickImage(member);
+        // 4. 3에서 변환된 DTO를 반환한다.
+        return rpNickImage;
     }
 
-    //회원정보 수정
-    public void modify(Member.rqModifyMember rqModifyMember){
-        MultipartFile imageFile = rqModifyMember.getImageFile();
-        String profileImage = rqModifyMember.getProfileImage();
-        if( !imageFile.isEmpty() ) {
-            profileImage = imageFile.getOriginalFilename();
-            File saveFile = new File("/C:/IntelliJ/images/profile", profileImage);
-            if ( !saveFile.exists() ){
-                saveFile.mkdirs();
-            }else {
-                long time = System.currentTimeMillis();
-                profileImage = String.format("%d_%s", time, profileImage);
-                saveFile = new File("/C:/IntelliJ/images/profile", profileImage);
-            }
-            try {
-                imageFile.transferTo(saveFile);
-            }catch (IllegalStateException e){
-                e.printStackTrace();
-            }catch (IOException e){
-                e.printStackTrace();
-            }
+    // 로그인 유저 메타 프로필 작성용 조회
+    public Member.rpMetaProfile metaProfile(String emailId) { // 1. 파라미터로 컨트롤러에서 넘어온 아이디를 받아온다.
+        // 2. 1에서 파라미터로 받아온 아이디로 로그인 유저를 조회하고, 조회된 값을 받아온다.
+        Member member = memberRepository.findByEmailId(emailId);
+        // 3. 2에서 조회된 Entity를 DTO로 변환한다.
+        Member.rpMetaProfile rpMetaProfile = new Member.rpMetaProfile(member);
+        // 4. 3에서 변환된 DTO를 반환한다.
+        return rpMetaProfile;
+    }
+
+    // 로그인시 인증 방식 - Spring Security에서 DB로 변경한다.
+    @Override
+    public UserDetails loadUserByUsername(String emailId) throws UsernameNotFoundException { // 3. 파라미터로 컨트롤러에서 넘어온 아이디를 받아온다.
+        // 4. 3에서 파라미터로 받아온 아이디로 유저를 조회하고, 조회된 값을 받아온다.
+        Member member = memberRepository.findByEmailId(emailId);
+        // 5. 4에서 조회된 값이 있는지 체크한다.
+        // 5-1. 조회된 값이 없는 경우
+        if ( member == null ) {
+            // 예외처리
+            throw new UsernameNotFoundException(emailId);
         }
-        rqModifyMember.setProfileImage(profileImage);
-        Member member = rqModifyMember.toEntity();
-        memberRepository.updateChangePwd(member.getEmailId(), member.getName(), member.getPhoneNumber(),member.getAddress(), member.getDetailAddress(), member.getStudyType(), member.getBirthday(), member.getNickname(), member.getGender(), member.getSelfIntro(), member.getProfileImage());
+        // 5-2. 조회된 값이 있는 경우
+        // 6. 4에서 조회된 유저를 Spring Security에서 제공하는 User에 빌더를 통해 값을 넣어준뒤 SecurityConfig로 반환한다.
+        return User.builder()
+                .username(member.getEmailId())
+                .password(member.getPwd())
+                .roles(member.getRoleName())
+                .build();
     }
 }

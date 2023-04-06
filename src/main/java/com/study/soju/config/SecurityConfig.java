@@ -34,25 +34,27 @@ import java.net.URLEncoder;
 @EnableWebSecurity // 웹보안 활성화를 위한 어노테이션
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     // @Autowired
-    // UserDetailsService userDetailsService; // Remember me에서 시스템에 있는 사용자 계정을 조회할때 사용할 서비스
+    // UserDetailsService userDetailsService; // 시스템에 있는 사용자 계정을 조회할때 사용할 서비스
 
     @Autowired
-    SignUpService signUpService; // UserDetailsService를 implements한 서비스
-                                 // Remember me에서 시스템에 있는 사용자 계정을 조회할때 사용할 서비스
-                                 // 로그인 인증 방식을 변경할 서비스
+    SignUpService signUpService; // UserDetailsService를 implements한 서비스 (시스템 --> DB)
+                                 // 로그인에서 DB에 있는 사용자 계정을 조회할때 사용할 서비스
+                                 // Remember me에서 DB에 있는 사용자 계정을 조회할때 사용할 서비스
+
     @Autowired
-    SignUpOAuthService signUpOAuthService;
+    SignUpOAuthService signUpOAuthService; // OAuth2UserService를 implements한 서비스
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable(); // Spring Security에서 POST방식을 사용하기 위한 메소드
+                               // Spring Security 설정들을 활성화시켜 준다.
 
         // 권한 설정
         http
-                //.antMatcher("/") // 특정 경로를 지정 해당 메소드를 생략하면 모든 경로에 대해 검색하게 된다.
+                //.antMatcher("/") // 특정 경로를 지정, 해당 메소드를 생략하면 모든 경로에 대해 검색하게 된다.
                 .authorizeRequests() // 보안 검사기능 시작
                 .antMatchers("/", "/n", "/joinform/**", "/loginform/**").permitAll() // 해당경로에 대한 모든 접근을 허용한다.
-                .antMatchers("/user").hasRole("USER") // /로그인은 USER권한을 가지고 있는 사용자에게만 허용한다.
+                .antMatchers("/ws/**", "/meta/**", "/mypage/**").hasRole("USER") // 로그인은 USER권한을 가지고 있는 사용자에게만 허용한다.
                 .antMatchers("/mypage/pay").access("hasRole('ADMIN')")
                 .anyRequest().authenticated(); // 나머지 요청들은 권한의 종류에 상관 없이 권한이 있어야 접근 가능하다.
 
@@ -64,17 +66,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .formLogin() // 보안 검증은 formLogin방식으로 한다.
                 .loginPage("/loginform") // 사용자 정의 로그인 페이지
-                .defaultSuccessUrl("/") // 로그인 성공 후 이동 페이지
-                .failureUrl("/loginform?error=true") // 로그인 실패 후 이동 페이지
-                .usernameParameter("emailId") // 아이디 파라미터명 설정
-                .passwordParameter("pwd") // 비밀번호 파라미터명 설정
+                .defaultSuccessUrl("/") // 로그인 성공 후 이동 페이지 - 핸들러를 사용할 경우 필요없다.
+                .failureUrl("/loginform?error=true") // 로그인 실패 후 이동 페이지 - 핸들러를 사용할 경우 필요없다.
+                .usernameParameter("emailId") // 아이디 파라미터명 설정 - 로그인 form에 아이디 name명과 동일하게 작성한다.
+                .passwordParameter("pwd") // 비밀번호 파라미터명 설정 - 로그인 form에 비밀번호 name명과 동일하게 작성한다.
                 .loginProcessingUrl("/loginform/login") // 로그인 Form Action Url
                 .successHandler(new AuthenticationSuccessHandler() { // 로그인 성공 후 핸들러 (해당 핸들러를 생성하여 핸들링 해준다.)
                     @Override
                     public void onAuthenticationSuccess(HttpServletRequest request,
                                                         HttpServletResponse response,
                                                         Authentication authentication) throws IOException, ServletException {
-                        // System.out.println("authentication : " + authentication.getName());
+                        System.out.println("authentication : " + authentication.getName());
+
                         response.sendRedirect("/"); // 로그인 성공 후 이동 페이지
                     }
                 })
@@ -96,17 +99,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                             errorMsg = "알수없는 이유로 로그인에 실패하였습니다.";
                         }
 
-                        // 로그인 실패 후 이동 페이지 - URLEncoder : URL을 통해 전송하는 데이터가 공백이 있거나 한글로 된 경우 URL에 맞게 인코딩 해주는 역할 (공백은 +로, 한글은 16진수로 인코딩 한다.)
+                        // 로그인 실패 후 이동 페이지
+                        // URLEncoder.encode() - URL을 통해 전송하는 데이터에 공백이 있거나 특수문자 및 한글 등으로 되어 있는 경우 URL에 맞게 인코딩 해주는 메소드이다. (공백은 +로, 한글은 16진수로 인코딩 한다.)
+                        //                       이를 통해 URL에서 사용하는 특수문자나 한글 등을 인코딩하여 안전하게 전송할 수 있다.
                         response.sendRedirect("/loginform?error=true&errorMsg=" + URLEncoder.encode(errorMsg, "UTF-8"));
                         // request.getRequestDispatcher("/loginform").forward(request, response); // 로그인 실패 후 이동 페이지
                     }
                 })
                 .permitAll(); // 사용자 정의 로그인 페이지 접근 권한 승인
 
+        // OAuth 2.0
         http
-                .oauth2Login()
-                    .userInfoEndpoint()
-                        .userService(signUpOAuthService);
+                .oauth2Login() // OAuth2 로그인 기능에 대한 여러 설정의 진입점이다.
+                .userInfoEndpoint() // OAuth2 로그인 성공 이후 사용자 정보를 가져올 때의 설정들을 담당한다.
+                .userService(signUpOAuthService); // 소셜 로그인 성공 후속 조치를 진행할 UserService 인터페이스의 구현체를 등록한다.
 
         // Remember Me 인증 (자동 로그인)
         http
@@ -179,11 +185,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     } // configure
 
     // 세션 제거 방식 - 로그아웃시 세션이 제거되지 않는 문제 해결
-    // 1. 세션이 생성되거나 페기될 때 호출되는 HttpSessionEventPublisher 클래스를 리스너로 등록 - 세션 제거 준비
-    // 2. 로그아웃시 HttpSessionEventPublisher 클래스의 sessionDestroyed(HttpSessionEvent event) 메서드가 호출되고
-    //    ApplicationContext.publishEvent(HttpSessionDestroyedEvent) 를 실행하여 HttpSessionDestroyedEvent 를 발생 - 세션 제거 시작
-    // 3. HttpSessionDestroyedEvent 가 실행되면 onApplicationEvent(SessionDestroyedEvent event) 가 호출되고
-    //    여기에서 removeSessionInformation(sessionId) 구문을 실행하는데 이 구문이 Set 에 저장된 SessionInformation 를 삭제 - 세션 제거 완료
+    // 1. 세션이 생성되거나 페기될 때 호출되는 HttpSessionEventPublisher를 리스너로 등록 - 세션 제거 준비
+    // 2. 로그아웃시 HttpSessionEventPublisher의 sessionDestroyed(HttpSessionEvent event) 메소드가 호출되고
+    //    ApplicationContext.publishEvent(HttpSessionDestroyedEvent)를 실행하여 HttpSessionDestroyedEvent를 발생 - 세션 제거 시작
+    // 3. HttpSessionDestroyedEvent가 실행되면 onApplicationEvent(SessionDestroyedEvent event)가 호출되고
+    //    여기에서 removeSessionInformation(sessionId) 구문을 실행하는데 이 구문이 Set 에 저장된 SessionInformation를 삭제 - 세션 제거 완료
     @Bean
     public static ServletListenerRegistrationBean httpSessionEventPublisher() {
         return new ServletListenerRegistrationBean(new HttpSessionEventPublisher());
@@ -193,12 +199,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(WebSecurity web) throws Exception {
         web
                 // static 디렉터리의 하위 파일 목록은 인증 무시 (= 항상통과)
-                .ignoring().antMatchers("/css/**", "/js/**", "/img/**", "/lib/**", "/favicon.ico", "/resources/**", "/error" );
+                .ignoring().antMatchers("/favicon.ico", "/resources/**", "/error", "/css/**", "/js/**", "/img/**", "/lib/**", "/imagePath/**");
     }
 
-    // 비밀번호 암호화 메소드
+    // 비밀번호 암호화 설정
     @Bean
     public PasswordEncoder passwordEncoder() {
+        // BCryptPasswordEncoder - BCrypt 해싱 함수(BCrypt hashing function)를 사용해서 비밀번호를 인코딩해주는 메소드와
+        //                         로그인 진행중인 유저에 의해 제출된 비밀번호와 저장소에 저장되어 있는 비밀번호의 일치 여부를 확인해주는 메소드를 제공한다.
+        //                         PasswordEncoder 인터페이스를 구현한 클래스이다.
         return new BCryptPasswordEncoder();
     }
 

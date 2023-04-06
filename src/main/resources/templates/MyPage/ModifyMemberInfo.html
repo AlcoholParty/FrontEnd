@@ -58,7 +58,7 @@
 
                 <div class="headerMenuRight">
                     <div class="whenLogin" sec:authorize="isAuthenticated()">
-                        <div class="welcome" th:text="${nickname} + '님 반갑습니다!'"></div>
+                        <div class="welcome" th:text="${member.nickname} + '님 반갑습니다!'"></div>
                         <div class="notificationsMenu">
                             <div class="icon" th:data-number="${alarmCount}">
                                 <i class="ri-notification-4-fill"></i>
@@ -107,8 +107,6 @@
                         </div>
                     </div>
 
-
-
                     <div class="whenLogin" sec:authorize="isAnonymous()">
                         <div class="welcome"></div>
                         <div class="notificationsMenu" onclick="location.href='/mypage/alarm'" style="visibility: hidden;">
@@ -127,6 +125,7 @@
         </nav>
     </header>
 
+
     <div class="container">
         <div class="containerLeft">
             <h2 class="my">My Page</h2>
@@ -144,7 +143,6 @@
                 <input type="button" class="purchaseList mypageBtn" onclick="location.href='/mypage';" value="구매내역">
             </div>
         </div>
-
 
         <div class="containerRight">
             <div class="modifyForm" th:object="${memberDTO}">
@@ -179,10 +177,10 @@
 
                         <div class="inputForm">
                             <div class="editTitle">프로필 사진</div>
-                            <img class="profileImgEdit" th:src="'/imagePath/' + ${member.profileImage}">
+                            <img id="previewProfileImage" class="profileImgEdit" th:src="'/imagePath/' + ${member.profileImage}">
                             <input name="profileImage" type="hidden" th:value="${member.profileImage}">
                             <div class="editImg"><label for="img" class="checkBtn editImgBtn">수정하기</label></div>
-                            <input type="file" id="img" name="imageFile" style="display:none;">
+                            <input type="file" id="img" name="imageFile" onchange="previewImage();" style="display: none;">
                         </div>
 
                         <div class="inputForm">
@@ -197,19 +195,19 @@
 
                         <div class="inputForm">
                             <div class="editTitle">휴대폰 번호</div>
-                            <input name="phoneNumber" th:value="${member.phoneNumber}" type="tel" class="inputText" readonly>
-                            <input id="btnPhone" value="인증하기" type="button" class="checkBtn" onclick="phoneCheck()">
+                            <input id="phoneNumber" name="phoneNumber" th:value="${member.phoneNumber}" type="tel" class="inputText" readonly>
+                            <input id="btnPhone" value="인증하기" type="button" class="checkBtn">
                         </div>
 
                         <div class="inputForm">
                             <div class="editTitle">주소</div>
-                            <input name="address" th:value="${member.address}" class="inputText" type="text">
+                            <input id="address" name="address" th:value="${member.address}" class="inputText" type="text">
                             <input id="btnAddress" type="button" value="주소찾기" class="checkBtn">
                         </div>
 
                         <div class="inputForm">
                             <div class="editTitle">상세 주소</div>
-                            <input name="detailAddress" th:value="${member.detailAddress}" class="inputText" type="text">
+                            <input id="detailAddress" name="detailAddress" th:value="${member.detailAddress}" class="inputText" type="text">
                         </div>
 
                         <div class="inputForm">
@@ -241,6 +239,7 @@
             </div>
         </div>
     </div>
+
 
     <footer>
         <div class="wrapper">
@@ -283,6 +282,9 @@
         </div>
     </footer>
 <!--JS----------------------------------------------------------------------------------------------------------------->
+    <!-- Ajax사용을 위한 js를 추가 -->
+    <script src="/js/httpRequest.js"></script>
+
     <script>
         var acc = document.getElementsByClassName("accordion");
         var i;
@@ -299,15 +301,15 @@
             });
         }
     </script>
-    <script src="/js/httpRequest.js"></script>
+
     <!--닉네임 중복체크 및 글자 수 제한-->
     <script>
         function checkNickname(f) {
             let nickname = f.nickname.value; //입력한 닉네임 가져오기
             let nicknameCheck = document.getElementById("nicknameCheck");
 
-            if ( nickname.length > 20 ) {
-                nicknameCheck.innerHTML = "닉네임은 10자내로 작성해주세요 (영문만 작성시 20자까지 가능합니다.)";
+            if ( nickname.length > 10 ) {
+                nicknameCheck.innerHTML = "닉네임은 10자내로 작성해주세요.";
             } else {
                 nicknameCheck.innerHTML = "";
                 let url = "/joinform/nicknamecheck";
@@ -315,7 +317,6 @@
                 sendRequest(url, param, resultCheckNickname, "POST");
             }
         }
-
         function resultCheckNickname() {
              if ( xhr.readyState == 4 && xhr.status == 200 ) {
                  let data = xhr.responseText; //닉네임
@@ -333,24 +334,41 @@
         }
     </script>
 
+    <script>
+        function previewImage() {
+            const previewProfileImage = document.getElementById("previewProfileImage");
+            const file = document.getElementById("img").files[0];
+            const reader = new FileReader();
+
+            reader.addEventListener("load", function () {
+                previewProfileImage.src = reader.result;
+            }, false);
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+
     <!-- iamport.payment.js 인증 -->
     <script type="text/javascript" src="https://cdn.iamport.kr/js/iamport.payment-1.2.0.js"></script>
     <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <!-- 아임포트 본인인증 및 값 삽입 => '인증하기' 버튼 클릭시 -->
     <script>
-        //textbox & 버튼(2개이상)을 누르면 함수가 실행되도록 하는 방법
-        //querySelectorAll로 id값(#id)을 불러와서 배열로 생성, 이후 forEach문을 활용해 각각의 것을 눌렀을 때 실행되게 하도록 한다.
+        // textbox & 버튼(2개이상)을 누르면 함수가 실행되도록 하는 방법
+        // querySelectorAll로 id값(#id)을 불러와서 배열로 생성, 이후 forEach문을 활용해 각각의 것을 눌렀을 때 실행되게 하도록 한다.
         let openPort = document.querySelectorAll("#phoneNumber, #btnPhone");
-        openPort.forEach(function(element){
+        openPort.forEach(function(element) {
             element.addEventListener("click", function() {
-
-                var IMP = window.IMP; //init로 객체초기화(가맹점식별코드)
-                IMP.init("imp88140833"); //가맹점 번호
+                var IMP = window.IMP; // init로 객체초기화 (가맹점식별코드)
+                IMP.init("imp88140833"); // 가맹점 번호
                 IMP.certification({
-                    popup : true
-                } ,function (rsp) {
-                    if ( rsp.success ){ //인증 성공 시
+                    popup: true // 팝업 사용
+                }, function (rsp) { // 1. 파라미터로 rsp를 받아온다.
+                    if ( rsp.success ){ // 인증에 성공할 경우
+                        // 2. 1에서 파라미터로 받아온 rsp에서 imp_uid를 가져온다.
                         let impUid = rsp.imp_uid;
+                        // 3. Ajax를 사용하여 2에서 가져온 imp_uid를 컨트롤러로 보낸다.
                         let url = "/joinform/certifications";
                         let param = "impUid=" + impUid;
                         sendRequest(url, param, resultCertifications, "POST");
@@ -362,16 +380,30 @@
                 });
             });
         });
-
+        // 휴대폰 인증 콜백 메소드
         function resultCertifications () {
             if ( xhr.readyState == 4 && xhr.status == 200 ) {
+                // 32. 컨트롤러에서 반환된 유저 정보 Map을 받아온다.
                 let data = xhr.responseText;
-                let json = JSON.parse(data); // map으로 받아온 값을 json형태로 가져오는 방법
+                // 33. 32에서 받아온 Map을 JavaScript 객체로 변환한다.
+                let jsData = JSON.parse(data);
+                let name = document.getElementById("name"); // 이름
+                let birthday = document.getElementById("birthday"); // 생년월일
+                let phoneNumber = document.getElementById("phoneNumber"); // 휴대폰 번호
 
-                let phoneNumber = document.getElementById("phoneNumber");
-
-                phoneNumber.value = json.phoneNumber;
-                phoneNumber.readOnly = true;
+                // 34. 33에서 변환된 Map 값 중 이름과 생년월일을 미리 작성되어 있는 이름과 생년원일과 비교해 휴대폰 인증정보와 가입자 명의가 맞는지 체크한다.
+                // 34-1. 휴대폰 인증정보와 가입자 명의가 맞을 경우
+                if ( jsData.name == name.value && jsData.birthday == birthday.value ) {
+                    // 34-1-1. 33에서 변환된 Map 값 중 휴대폰 번호를 작성란에 전달하고 변경하지 못하도록 막는다.
+                    phoneNumber.value = json.phoneNumber; // 변환된 Map 값 중 휴대폰 번호를 가져와 휴대폰 번호 작성란에 전달한다.
+                    phoneNumber.readOnly = true; // 전달된 휴대폰 번호를 변경하지 못하도록 막는다.
+                    return;
+                // 34-2. 휴대폰 인증정보와 가입자 명의가 틀릴 경우
+                } else {
+                    // 34-2-1. 가입자 명의로 다시 인증하도록 경고창만 띄우고 아무 작업 없이 돌아간다.
+                    alert("가입자 명의로 된 휴대폰으로 인증하시기 바랍니다.");
+                    return;
+                }
             }
         }
     </script>
@@ -402,6 +434,7 @@
     <script>
         function modifyClear(f){
             //입력한 정보들
+
             //emailId
             let emailId = f.emailId.value; //Email
 
@@ -434,20 +467,15 @@
             let platform = f.platform.value;
             let roleName = f.roleName.value;
 
-            console.log("emailId  " + emailId);
-            console.log("platform  " + platform);
-            console.log("roleName  " + roleName);
-            console.log("nickname  " + nickname);
-            console.log("hNickname  " + hNickname);
-
             //유효성 검사
+
             //닉네임
             if ( nickname == '' ) {
                 alert("닉네임을 입력하세요");
                 return;
             }
             //닉네임 형식
-            if ( nickname.length > 20 ) {
+            if ( nickname.length > 10 ) {
                 alert("닉네임의 길이는 10자 이내입니다.");
                 return;
             }
@@ -455,13 +483,11 @@
                 alert("닉네임 중복확인을 해주세요");
                 return;
             }
-
             //phoneNumber
             if ( phoneNumber == '' ) {
                 alert("핸드폰 번호를 입력하세요");
                 return;
             }
-
             //address
             if ( address == '' ) {
                 alert("주소를 입력하세요");
@@ -472,7 +498,6 @@
                 alert("상세주소를 입력하세요");
                 return;
             }
-
             //studyType
             if ( studyType == '' ) {
                 alert("관심분야를 선택하세요");
@@ -482,12 +507,13 @@
             f.submit();
         }
     </script>
+
     <script>
         const icon = document.querySelector('.icon');
         const notiDrop = document.querySelector('.notiDrop');
         let status = 0; //0이면 클릭 안된 상태, 1이면 클릭 된 상태
 
-        function open(e){
+        function menuOpen(e){
             if ( e == 1 ){
                 notiDrop.style.display = "block";
             } else {
@@ -497,10 +523,10 @@
         icon.addEventListener('click', function () {
             if( status == 0 ){
                 status = 1;
-                open(status);
+                menuOpen(status);
             } else{
                 status = 0;
-                open(status);
+                menuOpen(status);
             }
         });
     </script>

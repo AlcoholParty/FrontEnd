@@ -28,51 +28,48 @@
             </div>
         </form>
     </div>
-
 <!--JS----------------------------------------------------------------------------------------------------------------->
+    <!-- Ajax사용을 위한 js를 추가 -->
     <script src="/js/httpRequest.js"></script>
-<script>
-    function findId(f) {
-        let name = f.name.value;
-        let phoneNumber = f.phoneNumber.value;
-        phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
-        //이름
-        if ( name == '' ) {
-            alert("이름을 입력하세요");
-            return;
-        }
-        //phoneNumber
-        if ( phoneNumber == '' ) {
-            alert("핸드폰 번호를 입력하세요");
-            return;
-        }
+    <script>
+        function findId(f) {
+            let name = f.name.value;
+            let phoneNumber = f.phoneNumber.value;
+            phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
-        let url = "/loginform/findidform/findid";
-        let param = "name=" + name +
-                    "&phoneNumber=" + phoneNumber;
-        sendRequest(url, param, resultFindId, "POST");
-    }
-
-    function resultFindId() {
-        if ( xhr.readyState == 4 && xhr.status == 200 ) {
-            let data = xhr.responseText;
-            console.log(data);
-
-            if ( data == "" ) {
-                alert("입력하신 정보로 가입된 아이디가 없습니다.\n입력하신 정보를 다시 확인해 주세요.");
+            //이름
+            if ( name == '' ) {
+                alert("이름을 입력하세요");
                 return;
-            } else {
-                let json = JSON.parse(data);
-                let emailId = json.emailId;
-                let platform = json.platform;
-                console.log(emailId);
-                console.log(platform);
-                location.href = "/loginform/findidform/checkid?emailId=" + emailId + "&platform=" + platform;
+            }
+            //phoneNumber
+            if ( phoneNumber == '' ) {
+                alert("핸드폰 번호를 입력하세요");
+                return;
             }
 
+            let url = "/loginform/findidform/findid";
+            let param = "name=" + name +
+                        "&phoneNumber=" + phoneNumber;
+            sendRequest(url, param, resultFindId, "POST");
         }
-    }
-</script>
+        function resultFindId() {
+            if ( xhr.readyState == 4 && xhr.status == 200 ) {
+                let data = xhr.responseText;
+                console.log(data);
+
+                if ( data == "" ) {
+                    alert("입력하신 정보로 가입된 아이디가 없습니다.\n입력하신 정보를 다시 확인해 주세요.");
+                    return;
+                } else {
+                    let json = JSON.parse(data);
+                    let emailId = json.emailId;
+                    let platform = json.platform;
+                    location.href = "/loginform/findidform/checkid?emailId=" + emailId + "&platform=" + platform;
+                }
+            }
+        }
+    </script>
 </body>
 </html>

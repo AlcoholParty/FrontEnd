@@ -55,6 +55,7 @@
                 </div>
 
                 <div class="headerMenuRight">
+                    <div class="welcome" sec:authorize="isAnonymous()">로그인이 필요합니다!!</div>
                     <div class="whenLogin" sec:authorize="isAuthenticated()">
                         <div class="welcome" th:text="${nickname} + '님 반갑습니다!'"></div>
                         <div class="notificationsMenu">
@@ -517,6 +518,7 @@
             </div>
         </div>
     </footer>
+<!--JS----------------------------------------------------------------------------------------------------------------->
     <script>
         const slides = document.querySelector('.slides'); //전체 슬라이드 컨테이너
         const slideImg = document.querySelectorAll('.slides li'); //모든 슬라이드들
@@ -619,7 +621,7 @@
         const notiDrop = document.querySelector('.notiDrop');
         let status = 0; //0이면 클릭 안된 상태, 1이면 클릭 된 상태
 
-        function open(e){
+        function menuOpen(e){
             if ( e == 1 ){
                 notiDrop.style.display = "block";
             } else {
@@ -629,10 +631,10 @@
         icon.addEventListener('click', function () {
             if( status == 0 ){
                 status = 1;
-                open(status);
+                menuOpen(status);
             } else{
                 status = 0;
-                open(status);
+                menuOpen(status);
             }
         });
     </script>

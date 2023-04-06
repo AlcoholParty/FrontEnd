@@ -9,9 +9,6 @@
     <link rel="stylesheet" type="text/css" href="/css/profile.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square-neo.css" rel="stylesheet">
-    <style>
-
-    </style>
 </head>
 <body>
     <header>
@@ -60,7 +57,7 @@
 
                 <div class="headerMenuRight">
                     <div class="whenLogin" sec:authorize="isAuthenticated()">
-                        <div class="welcome" th:text="${nickname} + '님 반갑습니다!'"></div>
+                        <div class="welcome" th:text="${member.nickname} + '님 반갑습니다!'"></div>
                         <div class="notificationsMenu">
                             <div class="icon" th:data-number="${alarmCount}">
                                 <i class="ri-notification-4-fill"></i>
@@ -228,6 +225,7 @@
             </div>
         </div>
     </footer>
+<!--JS----------------------------------------------------------------------------------------------------------------->
     <script>
         var acc = document.getElementsByClassName("accordion");
         var i;
@@ -244,12 +242,13 @@
             });
         }
     </script>
+
     <script>
         const icon = document.querySelector('.icon');
         const notiDrop = document.querySelector('.notiDrop');
         let status = 0; //0이면 클릭 안된 상태, 1이면 클릭 된 상태
 
-        function open(e){
+        function menuOpen(e){
             if ( e == 1 ){
                 notiDrop.style.display = "block";
             } else {
@@ -259,10 +258,10 @@
         icon.addEventListener('click', function () {
             if( status == 0 ){
                 status = 1;
-                open(status);
+                menuOpen(status);
             } else{
                 status = 0;
-                open(status);
+                menuOpen(status);
             }
         });
     </script>
