@@ -3,89 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <link href="https://hangeul.pstatic.net/hangeul_static/css/nanum-square-neo.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/css/studyRoom.css">
     <style>
         html, body {
             height: 100%;
             overflow: hidden;
         }
     </style>
-    <link rel="stylesheet" type="text/css" href="/css/CafeRoom.css">
 </head>
 <!-- unload - beforeunload 이벤트에서 반환한 값을 처리한다. -->
 <body onkeydown="keyDown()" onkeyup="keyUp()" onunload="exit()">
     <!-- 방 제목 구역 -->
-    <div class="titleAreaCss" id="titleArea">
+    <header class="roomInfo" id="titleArea">
         <b id="title" th:text="'방 번호 : ' + ${metaRoom.idx} + '    |    ' + '(카페)' + ' 방 제목 : ' + ${metaRoom.metaTitle} + ' ( ' + ${metaRoom.metaRecruitingPersonnel} + ' / ' + ${metaRoom.metaPersonnel} + ' )'"></b>
-    </div>
+    </header>
 
     <!-- 상단 구역 -->
-    <div class="topAreaCss">
-        <!-- 상단 왼쪽 참가자 구역 -->
-        <div class="participantAreaCss" id="profileArea">
-            <!-- 참가자 코드 -->
-            <div class="participant participantCss" th:each="participant : ${participantList}" th:id="${participant.metaNickname}">
-                <img class="participantImageCss" th:src="@{/imagePath/} + ${participant.metaProfileImage}">
-                <div class="participantNicknameAreaCss">
-                    <b class="participantNicknameCss" th:text="${participant.metaNickname}"></b>
-                    <b class="participantMasterCss" th:if="${participant.metaNickname == metaRoom.metaMaster}">방장</b>
+    <section class="container">
+        <nav class="topNav">
+            <!-- 상단 왼쪽 참가자 구역 -->
+            <div class="topLeftMember" id="profileArea">
+                <!-- 참가자 코드 -->
+                <div class="participant participantDiv" th:each="participant : ${participantList}" th:id="${participant.metaNickname}">
+                    <img class="participantImg" th:src="@{/imagePath/} + ${participant.metaProfileImage}">
+                    <div class="participantInfo">
+                        <b class="participantNickname" th:text="${participant.metaNickname}"></b>
+                        <b class="participantMaster" th:if="${participant.metaNickname == metaRoom.metaMaster}">방장</b>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 상단 오른쪽 메뉴바 구역 -->
-        <div class="menuBarAreaCss">
-            <input class="menuBarExitBtnCss" type="button" value="나가기" th:onclick="|location.href='@{/meta/selfexit(idx = ${metaRoom.idx}, nickname = ${nickImage.nickname})}'|">
-        </div>
-    </div>
+            <!-- 상단 오른쪽 메뉴바 구역 -->
+            <div class="topRightMenu">
+                <input class="menuBarExitBtn" type="button" value="나가기" th:onclick="|location.href='@{/meta/selfexit(idx = ${metaRoom.idx}, nickname = ${nickImage.nickname})}'|">
+            </div>
 
-    <!-- 중단 구역 -->
-    <div class="middleAreaCss">
-        <!-- 메타버스 -->
-        <canvas class="metaCanvasCss" id="canvas"></canvas>
+        </nav>
 
-        <!-- 상세 프로필과 채팅 -->
-        <div class="detailProfileAndChatAreaCss">
-            <!-- 프로필과 채팅 수직 정렬 -->
-            <div class="detailProfileAndChatCss">
+        <!-- 중단 구역 -->
+        <div class="middleMeta">
+            <!-- 메타버스 -->
+            <canvas class="metaCanvas" id="canvas"></canvas>
+
+            <!-- 상세 프로필과 채팅 -->
+            <div class="detailProfileAndChatArea">
                 <!-- 상세 프로필 구역 -->
-                <div class="detailProfileAreaCss" id="detailProfileArea">
-                    <b class="detailProfileCloseBtnCss" id="btnDetailProfileClose">X</b>
+                <div class="detailProfile" id="detailProfileArea">
+                    <b class="detailProfileCloseBtn" id="btnDetailProfileClose">X</b>
                     <!-- 상세 프로필 사진 구역 -->
                     <!-- 공통 구역 -->
-                    <div class="detailProfileImageAreaCss">
-                        <img class="detailProfileImageCss" id="detailProfileImage">
+                    <div class="detailProfileImageArea">
+                        <img class="detailProfileImage" id="detailProfileImage">
                     </div>
                     <!-- 프로필 닉네임 구역 -->
-                    <div class="detailProfileNicknameAreaCss" id="detailProfileNicknameArea">
+                    <div class="detailProfileNicknameArea" id="detailProfileNicknameArea">
                         <!-- 공통 구역 -->
                         <b id="detailProfileNickname"></b>
                     </div>
                 </div>
 
                 <!-- 채팅 구역 -->
-                <div class="chatAreaCss" id="chatArea">
-                    <div class="chatTitleCss">채팅</div><br>
+                <div class="chatArea" id="chatArea">
+                    <div class="chatTitle">채팅</div><br>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 하단 구역 -->
-    <div class="bottomAreaCss">
-        <!-- 녹음 구역 -->
-        <div class="recordAreaCss" id="recordArea">
-            <audio class="recordCss" id="record" controls></audio>
-            <input class="recordSendBtnCss" id="btnRecordSend" type="button" value="녹음 전송" disabled>
-            <input class="recordStopBtnCss" id="btnRecordStop" type="button" value="녹음 정지" disabled>
-            <input class="recordStartBtnCss" id="btnRecordStart" type="button" value="녹음 시작">
-        </div>
+        <!-- 하단 구역 -->
+        <div class="bottomArea">
+            <!-- 녹음 구역 -->
+            <div class="recordArea" id="recordArea">
+                <audio class="recordPlayer" id="record" controls></audio>
+                <input class="recordBtn" id="btnRecordSend" type="button" value="녹음 전송" disabled>
+                <input class="recordBtn" id="btnRecordStop" type="button" value="녹음 정지" disabled>
+                <input class="recordBtn" id="btnRecordStart" type="button" value="녹음 시작">
+            </div>
 
-        <!-- 메시지 입력란 -->
-        <div class="messageAreaCss">
-            <input class="messageCss" id="message" type="text" placeholder = "채팅 입력란">
-            <input class="messageSendBtnCss" id="btnSend" type="button" value="보내기" onclick="send()">
+            <!-- 메시지 입력란 -->
+            <div class="messageArea">
+                <input class="message" id="message" type="text" placeholder = "채팅 입력란">
+                <input class="messageSendBtn" id="btnSend" type="button" value="보내기" onclick="send()">
+            </div>
         </div>
-    </div>
+    </section>
 <!-------------------------------------------------------js 구역-------------------------------------------------------->
     <!-- SockJS 사용을 위한 js를 추가 -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
