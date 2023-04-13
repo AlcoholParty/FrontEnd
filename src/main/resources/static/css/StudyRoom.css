@@ -7,9 +7,10 @@ body{
 }
 .roomInfo {
     height: 3%;
+    width: 99.2%;
     margin: 5px 0px;
     border-radius: 5px;
-    background: #777777;
+    background: #8b8b8b;
     display: flex;
     align-items: center;
 }
@@ -161,7 +162,7 @@ body{
 }
 
 
-.chatArea {
+.chatAreaDiv {
     border-radius: 5px;
     background: #ececec;
     width: 100%;
